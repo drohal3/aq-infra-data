@@ -42,39 +42,8 @@ resource "aws_subnet" "isolated_subnet" {
 
 # security group
 module "example_sg" {
-  source = "./modules/aws_security_group"
-
-  name        = "example-security-group"
-  description = "Example security group for instances in the VPC"
-
-  ingress_rules = [
-    {
-      description = "instance ssh access"
-      from_port   = 22
-      to_port     = 22
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    {
-      description = "doska-dominik"
-      from_port   = 6000
-      to_port     = 6000
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    {
-      description = "range for cpc devices"
-      from_port   = 6100
-      to_port     = 6300
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    {
-      description = "frp server"
-      from_port   = 7000
-      to_port     = 7000
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-  ]
+  source        = "./modules/aws_security_group"
+  name          = "example-security-group"
+  description   = "Example security group for instances in the VPC"
+  ingress_rules = jsondecode(file("./frp_ingress_rules.json"))
 }
