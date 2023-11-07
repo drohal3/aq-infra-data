@@ -1,4 +1,3 @@
-# TODO: refactor to modules
 # EC2 creation
 module "ec2_frp" {
   source            = "./modules/aws_ec2"
