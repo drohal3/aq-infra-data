@@ -14,3 +14,14 @@ variable "ec2_instance_name" {
   description = "Name for the EC2 instance"
   type = string
 }
+
+variable "subnet_id" {
+  description = "Subnet ID"
+  type = string
+}
+
+variable "security_groups" {
+  description = "A list of security group IDs"
+  type        = list(string)
+  default     = []
+}
