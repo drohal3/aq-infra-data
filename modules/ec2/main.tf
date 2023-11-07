@@ -7,3 +7,5 @@ resource "aws_instance" "ec2_instance" {
     Name = var.ec2_instance_name
   }
 }
+
+# TODO: security group
