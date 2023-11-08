@@ -6,6 +6,9 @@ module "ec2_frp" {
   security_groups   = [module.example_sg.security_group_id]
 }
 
+resource "aws_eip" "example_eip" {
+  instance = module.ec2_frp.instance_id # TODO: verify if terraform destroy and terraform apply persist the same IP
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
