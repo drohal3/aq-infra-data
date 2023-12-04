@@ -1,51 +1,86 @@
-# EC2 creation
-module "ec2_frp" {
-  source            = "./modules/aws_ec2"
-  ec2_instance_name = "fast reverse proxy"
-  subnet_id         = aws_subnet.public_subnet[0].id
-  security_groups   = [module.example_sg.security_group_id]
+#######################################################################################################################
+
+#######################################################################################################################
+resource "aws_kinesis_stream" "cpc_data_stream" {
+  #  https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kinesis_stream
+  #  Kinesis Data Stream for raw cpc measurement data
+  name             = "cpc-data-stream"
+  retention_period = 24
+
+  stream_mode_details {
+    stream_mode = "ON_DEMAND"
+  }
 }
 
-resource "aws_eip" "example_eip" {
-  instance = module.ec2_frp.instance_id # TODO: verify if terraform destroy and terraform apply persist the same IP
+resource "aws_iot_topic_rule" "rule" {
+  #  IoT topic rule to direct data published in MQTT topic to the Kinesis Data Stream
+  name        = "CPC_MeasurementRule"
+  description = "IoT Topic Rule for CPC measurements"
+  enabled     = true
+  sql         = "SELECT * FROM 'cpc1_1/measurement'"
+  sql_version = "2016-03-23"
+
+  kinesis {
+    role_arn    = aws_iam_role.iot_kinesis_role.arn
+    stream_name = aws_kinesis_stream.cpc_data_stream.name
+  }
 }
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-# VPC creation
-resource "aws_vpc" "vpc_cpc" {
-  cidr_block           = "10.0.0.0/16" # Define the IP address range for your VPC
-  enable_dns_support   = true
-  enable_dns_hostnames = true
+# IAM
+resource "aws_iam_role" "iot_kinesis_role" {
+  name = "iot_kinesis_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "iot.amazonaws.com"
+        }
+      }
+    ]
+  })
 }
 
-## subnets
-resource "aws_subnet" "public_subnet" {
-  count                   = 1
-  vpc_id                  = aws_vpc.vpc_cpc.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "eu-central-1a"
-  map_public_ip_on_launch = true
+resource "aws_iam_policy" "kinesis_publish_policy" {
+  name        = "kinesis_publish_policy"
+  description = "Policy to allow publishing to Kinesis Data Stream"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action   = ["kinesis:PutRecord", "kinesis:PutRecords"],
+        Effect   = "Allow",
+        Resource = aws_kinesis_stream.cpc_data_stream.arn
+      }
+      # Add more statements as needed for other permissions
+    ]
+  })
 }
 
-resource "aws_subnet" "private_subnet" {
-  count             = 1
-  vpc_id            = aws_vpc.vpc_cpc.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "eu-central-1b"
+resource "aws_iam_role_policy_attachment" "kinesis_publish_attachment" {
+  policy_arn = aws_iam_policy.kinesis_publish_policy.arn
+  role       = aws_iam_role.iot_kinesis_role.name
 }
 
-resource "aws_subnet" "isolated_subnet" {
-  count             = 1
-  vpc_id            = aws_vpc.vpc_cpc.id
-  cidr_block        = "10.0.3.0/24"
-  availability_zone = "eu-central-1c"
+## Optionally, you might want to output the IAM role ARN for reference
+output "iot_kinesis_role_arn" {
+  value = aws_iam_role.iot_kinesis_role.arn
 }
 
-# security group
-module "example_sg" {
-  source        = "./modules/aws_security_group"
-  name          = "example-security-group"
-  description   = "Example security group for instances in the VPC"
-  ingress_rules = jsondecode(file("./frp_ingress_rules.json"))
+output "kinesis_stream_arn" {
+  value = aws_kinesis_stream.cpc_data_stream.arn
+}
+
+resource "aws_s3_bucket" "measurements_bucket" {
+  bucket = "idealaq-cpc-measurements-bucket"
+
+  tags = {
+    Name        = "CPC measurements bucket"
+    Environment = "Dev"
+  }
 }
