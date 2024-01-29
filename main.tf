@@ -1,4 +1,5 @@
 #######################################################################################################################
+# TODO: https://silvr.medium.com/aws-timestream-with-terraform-259eaa9960d1
 
 #######################################################################################################################
 resource "aws_kinesis_stream" "aq_data_stream" {
@@ -26,9 +27,15 @@ resource "aws_timestreamwrite_table" "aq_time_stream_table" {
   database_name = aws_timestreamwrite_database.aq_time_stream.database_name
   table_name    = "aq_data"
 
+#  TODO: schema?
+
+  magnetic_store_write_properties {
+    enable_magnetic_store_writes = true
+  }
+
   retention_properties {
 #    TODO: adjust retention period values!!!
-    magnetic_store_retention_period_in_days = 30
+    magnetic_store_retention_period_in_days = 1
     memory_store_retention_period_in_hours  = 1
   }
 
@@ -40,12 +47,27 @@ resource "aws_iot_topic_rule" "rule" {
   name        = "AQ_MeasurementRule"
   description = "IoT Topic Rule for AQ measurements"
   enabled     = true
-  sql         = "SELECT * FROM 'cpc1_1/measurement'"
+  sql         = "SELECT * FROM 'aq/measurement'"
   sql_version = "2016-03-23"
 
   kinesis {
     role_arn    = aws_iam_role.iot_role.arn
     stream_name = aws_kinesis_stream.aq_data_stream.name
+    partition_key = "$${device}"
+  }
+
+  timestream {
+    database_name = aws_timestreamwrite_database.aq_time_stream.database_name
+    table_name = aws_timestreamwrite_table.aq_time_stream_table.table_name
+    role_arn = aws_iam_role.iot_role.arn
+    dimension {
+      name  = "device"
+      value = "$${device}"
+    }
+    timestamp {
+      unit  = "MILLISECONDS"
+      value = "$${time_to_epoch(time, 'yyyy-MM-dd HH:mm:ss')}"
+    }
   }
 }
 
@@ -93,9 +115,19 @@ resource "aws_iam_policy" "timestream_publish_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        Action   = ["timestream:WriteRecords"],
+        Action   = [
+          "timestream:WriteRecords",
+          "timestream:WriteRecords",
+        ],
         Effect   = "Allow",
         Resource = aws_timestreamwrite_table.aq_time_stream_table.arn
+      },
+      {
+        Action = [
+          "timestream:DescribeEndpoints",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
       }
       # Add more statements as needed for other permissions
     ]

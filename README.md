@@ -17,7 +17,8 @@ terraform destroy
 Expected data:
 ```JSON
 {
-  "Time": "...",
-  "Device": "..."
+  "time": "...",
+  "device": "...",
+  "some_measurement": 0
 }
 ```
