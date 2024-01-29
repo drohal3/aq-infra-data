@@ -13,3 +13,11 @@ terraform apply
 ```
 terraform destroy
 ```
+
+Expected data:
+```JSON
+{
+  "Time": "...",
+  "Device": "..."
+}
+```
