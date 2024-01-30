@@ -27,7 +27,13 @@ resource "aws_timestreamwrite_table" "aq_time_stream_table" {
   database_name = aws_timestreamwrite_database.aq_time_stream.database_name
   table_name    = "aq_data"
 
-#  TODO: schema?
+  schema {
+    composite_partition_key {
+      enforcement_in_record = "REQUIRED"
+      name                  = "device"
+      type                  = "DIMENSION"
+    }
+  }
 
   magnetic_store_write_properties {
     enable_magnetic_store_writes = true
@@ -47,7 +53,7 @@ resource "aws_iot_topic_rule" "rule" {
   name        = "AQ_MeasurementRule"
   description = "IoT Topic Rule for AQ measurements"
   enabled     = true
-  sql         = "SELECT * FROM 'aq/measurement'"
+  sql         = "SELECT temperature, humidity, time FROM 'aq/measurement'"
   sql_version = "2016-03-23"
 
   kinesis {
