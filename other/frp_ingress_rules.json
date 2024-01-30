@@ -1,0 +1,30 @@
+[
+  {
+    "description": "instance ssh access",
+    "from_port": 22,
+    "to_port": 22,
+    "protocol" : "tcp",
+    "cidr_blocks" : ["0.0.0.0/0"]
+  },
+  {
+    "description": "doska-dominik",
+    "from_port": 6000,
+    "to_port": 6000,
+    "protocol" : "tcp",
+    "cidr_blocks" : ["0.0.0.0/0"]
+  },
+  {
+    "description": "range for cpc devices",
+    "from_port": 6100,
+    "to_port": 6300,
+    "protocol" : "tcp",
+    "cidr_blocks" : ["0.0.0.0/0"]
+  },
+  {
+    "description": "frp server",
+    "from_port": 7000,
+    "to_port": 7000,
+    "protocol" : "tcp",
+    "cidr_blocks" : ["0.0.0.0/0"]
+  }
+]
