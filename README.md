@@ -1,3 +1,6 @@
+# Infrastructure for air quality data ingestion, storing and serving
+
+## Useful commands
 ```
 terraform fmt
 ```
@@ -14,7 +17,8 @@ terraform apply
 terraform destroy
 ```
 
-Expected data:
+## Example data
+...to be published to aq/measurement topic.
 ```JSON
 {
   "time": "2024-01-30 10:00:05",
