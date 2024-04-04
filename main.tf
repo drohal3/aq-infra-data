@@ -21,7 +21,7 @@
 #  schema {
 #    composite_partition_key {
 #      enforcement_in_record = "REQUIRED"
-#      name                  = "device"
+#      name                  = "device_id"
 #      type                  = "DIMENSION"
 #    }
 #  }
@@ -52,8 +52,8 @@
 #    table_name = aws_timestreamwrite_table.aq_time_stream_table.table_name
 #    role_arn = aws_iam_role.iot_role.arn
 #    dimension {
-#      name  = "device"
-#      value = "$${device}"
+#      name  = "device_id"
+#      value = "$${device_id}"
 #    }
 #    timestamp {
 #      unit  = "MILLISECONDS"
@@ -119,13 +119,13 @@ resource "aws_iot_topic_rule" "aq_kinesis_rule" {
   name        = "AQ_Kinesis_Measurement_Rule"
   description = "IoT Topic Kinesis Rule for AQ measurements"
   enabled     = true
-  sql         = "SELECT device, temperature, humidity, time FROM 'aq/measurement'"
+  sql         = "SELECT device_id, time, measurements, other  FROM 'aq/measurement'"
   sql_version = "2016-03-23"
 
   kinesis {
     role_arn      = aws_iam_role.iot_kinesis_s3_role.arn
     stream_name   = aws_kinesis_stream.aq_data_stream.name
-    partition_key = "$${device}"
+    partition_key = "$${device_id}"
   }
 }
 
@@ -173,8 +173,8 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
 
     # Example prefix using partitionKeyFromQuery, applicable to JQ processor
     # For dynamic partitioning: https://analyticsweek.com/kinesis-data-firehose-now-supports-dynamic-partitioning-to-amazon-s3/
-    prefix = "data/device=!{partitionKeyFromQuery:device}/year:!{partitionKeyFromQuery:year}/month:!{partitionKeyFromQuery:month}/day:!{partitionKeyFromQuery:day}/hour:!{partitionKeyFromQuery:hour}/"
-    #    prefix = "data/device=!{partitionKeyFromQuery:device}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
+    prefix = "data/device_id=!{partitionKeyFromQuery:device_id}/year:!{partitionKeyFromQuery:year}/month:!{partitionKeyFromQuery:month}/day:!{partitionKeyFromQuery:day}/hour:!{partitionKeyFromQuery:hour}/"
+    #    prefix = "data/device_id=!{partitionKeyFromQuery:device_id}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
     error_output_prefix = "errors/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/!{firehose:error-output-type}/"
 
     processing_configuration {
@@ -203,8 +203,8 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
         }
         parameters {
           parameter_name  = "MetadataExtractionQuery"
-          parameter_value = "{device:.device, year:.time | strptime(\"%Y-%m-%d %H:%M:%S\") | strftime(\"%Y\"), month: .time | strptime(\"%Y-%m-%d %H:%M:%S\") | strftime(\"%m\"), day: .time | strptime(\"%Y-%m-%d %H:%M:%S\") | strftime(\"%d\"), hour:.time | strptime(\"%Y-%m-%d %H:%M:%S\") | strftime(\"%H\")}"
-          #          parameter_value = "{device:.device}"
+          parameter_value = "{device_id:.device_id, year:.time | strptime(\"%Y-%m-%dT%H:%M:%SZ\") | strftime(\"%Y\"), month: .time | strptime(\"%Y-%m-%dT%H:%M:%SZ\") | strftime(\"%m\"), day: .time | strptime(\"%Y-%m-%dT%H:%M:%SZ\") | strftime(\"%d\"), hour:.time | strptime(\"%Y-%m-%dT%H:%M:%SZ\") | strftime(\"%H\")}"
+          #          parameter_value = "{device_id:.device_id}"
         }
       }
     }
