@@ -44,7 +44,7 @@
 #  name        = "AQ_Timestream_MeasurementRule"
 #  description = "IoT Topic Timestream Rule for AQ measurements"
 #  enabled     = true
-#  sql         = "SELECT temperature, humidity, time FROM 'aq/measurement'"
+#  sql         = "SELECT temperature, humidity, time FROM 'aq/measurement'" # TODO: select all!
 #  sql_version = "2016-03-23"
 
 #  timestream {
@@ -97,22 +97,22 @@
 #}
 
 #TODO: uncomment to enable timestream
-#resource "aws_iam_role" "iot_role" {
-#  name = "iot_role"
-#
-#  assume_role_policy = jsonencode({
-#    Version = "2012-10-17",
-#    Statement = [
-#      {
-#        Action = "sts:AssumeRole",
-#        Effect = "Allow",
-#        Principal = {
-#          Service = "iot.amazonaws.com"
-#        }
-#      }
-#    ]
-#  })
-#}
+resource "aws_iam_role" "iot_role" {
+  name = "iot_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "iot.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
 
 # TODO: uncomment to enable streaming option
 #resource "aws_iot_topic_rule" "aq_kinesis_rule" {
@@ -405,3 +405,57 @@
 
 # __
 
+########################################################################################################################
+########################################################################################################################
+# IoT Core -> DynamoDB
+
+resource "aws_dynamodb_table" "aq-dynamodb-table" {
+  name           = "AQdata"
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "device_id"
+  range_key      = "time"
+
+  attribute {
+    name = "device_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "time"
+    type = "S"
+  }
+
+  #  attribute {
+  #    name = "sample_data"
+  #    type = "S"
+  #  }
+
+  #  tags = {
+  #
+  #  }
+  #  TODO: tags - everywhere!!! tag everything possible!!!
+}
+
+
+
+resource "aws_iot_topic_rule" "aq_dynamodb_rule" {
+  name        = "AQ_DynamoDB_Measurement_Rule"
+  description = "IoT Topic DynamoDB Rule for AQ measurements"
+  enabled     = true
+  sql         = "SELECT *  FROM 'aq/measurement'"
+  sql_version = "2016-03-23"
+
+  dynamodb {
+    role_arn        = aws_iam_role.iot_role.arn
+    table_name      = "AQdata"
+    hash_key_field  = "device_id"
+    hash_key_type   = "STRING"
+    hash_key_value  = "$${device_id}}"
+    range_key_field = "time"
+    range_key_type  = "STRING"
+    range_key_value = "$${time}}"
+    payload_field = "sample_data"
+  }
+}
