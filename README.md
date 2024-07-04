@@ -32,3 +32,9 @@ terraform destroy
   "saturator_temp_c": 0
 }
 ```
+
+to get IoT thing certificates, run
+> **DANGER:** handle certificates with caution 
+```bash
+./scripts/outputsensitive.sh
+```
