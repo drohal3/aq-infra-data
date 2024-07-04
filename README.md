@@ -25,13 +25,10 @@ terraform destroy
 ```JSON
 {
   "time": "2024-04-15T16:45:12Z",
-  "device_id": "test_1",
-  "measurements": {
-    "humidity": 25.8,
-    "temperature": 21.5
-  },
-  "other": {
-    "saturator_temperature": 0
-  }
+  "device_id": "cpc1",
+  "temp_c": 0,
+  "co_ppb": 0,
+  "humidity_pct": 50,
+  "saturator_temp_c": 0
 }
 ```

@@ -408,6 +408,19 @@ resource "aws_iam_role" "iot_role" {
 ########################################################################################################################
 ########################################################################################################################
 # IoT Core -> DynamoDB
+variable "region" {
+  description = "The AWS region to deploy the resources"
+  default     = "eu-central-1"
+}
+
+variable "iot_topic" {
+  description = "The MQTT topic for IoT Core"
+  default     = "aq/measurement"
+}
+
+provider "aws" {
+  region = var.region
+}
 
 resource "aws_dynamodb_table" "aq-dynamodb-table" {
   name           = "AQdata"
@@ -444,7 +457,7 @@ resource "aws_iot_topic_rule" "aq_dynamodb_rule" {
   name        = "AQ_DynamoDB_Measurement_Rule"
   description = "IoT Topic DynamoDB Rule for AQ measurements"
   enabled     = true
-  sql         = "SELECT *  FROM 'aq/measurement'"
+  sql         = "SELECT * FROM '${var.iot_topic}'"
   sql_version = "2016-03-23"
 
   dynamodb {
@@ -456,6 +469,65 @@ resource "aws_iot_topic_rule" "aq_dynamodb_rule" {
     range_key_field = "time"
     range_key_type  = "STRING"
     range_key_value = "$${time}}"
-    payload_field = "sample_data"
+    payload_field   = "sample_data"
   }
 }
+
+resource "aws_iam_role" "aq_data_iot_core_role" {
+  name = "aq_data_iot_core_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "iot.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iot_policy" "aq_data_iot_core_policy" {
+  name        = "aq_data_iot_core_policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "iot:Publish",
+          "iot:Receive"
+        ],
+        Effect = "Allow",
+        Resource = [
+          "arn:aws:iot:${var.region}:${data.aws_caller_identity.current.account_id}:topic/${var.iot_topic}"
+        ]
+      },
+      {
+        Action = [
+          "iot:Connect"
+        ],
+        Effect = "Allow",
+        Resource = [
+          "arn:aws:iot:${var.region}:${data.aws_caller_identity.current.account_id}:client/aq*Client",
+          "arn:aws:iot:${var.region}:${data.aws_caller_identity.current.account_id}:client/basicPubSub",
+        ]
+      },
+      {
+        Action = [
+          "iot:Subscribe"
+        ],
+        Effect = "Allow",
+        Resource = [
+          "arn:aws:iot:${var.region}:${data.aws_caller_identity.current.account_id}:topicfilter/${var.iot_topic}"
+        ]
+      }
+      # Add more statements as needed for other permissions
+    ]
+  })
+}
+
+data "aws_caller_identity" "current" {}
