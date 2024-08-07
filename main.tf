@@ -33,16 +33,6 @@ resource "aws_dynamodb_table" "aq_data_dynamodb_table" {
     name = "time"
     type = "S"
   }
-
-  #  attribute {
-  #    name = "sample_data"
-  #    type = "S"
-  #  }
-
-  #  tags = {
-  #
-  #  }
-  #  TODO: tags - everywhere!!! tag everything possible!!!
 }
 
 
