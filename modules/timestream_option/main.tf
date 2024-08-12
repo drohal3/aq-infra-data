@@ -2,7 +2,8 @@ resource "aws_timestreamwrite_database" "aq_time_stream" {
   database_name = "aq-time-stream"
 
   tags = {
-    Flow = "timestream"
+    app = "aq_data",
+    flow = "timestream"
   }
 }
 
@@ -10,6 +11,11 @@ resource "aws_timestreamwrite_table" "aq_time_stream_table" {
   #  https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/timestreamwrite_table
   database_name = aws_timestreamwrite_database.aq_time_stream.database_name
   table_name    = "aq_data"
+
+  tags = {
+    app = "aq_data",
+    flow = "timestream"
+  }
 
   schema {
     composite_partition_key {
@@ -34,6 +40,12 @@ resource "aws_iot_topic_rule" "aq_timestream_rule" {
   #  IoT topic rule to direct data published in MQTT topic to the Kinesis Data Stream
   name        = "AQ_Timestream_MeasurementRule"
   description = "IoT Topic Timestream Rule for AQ measurements"
+
+  tags = {
+    app = "aq_data",
+    flow = "timestream"
+  }
+
   enabled     = true
   sql         = "SELECT * FROM '${var.iot_topic}'"
   sql_version = "2016-03-23"
@@ -57,6 +69,11 @@ resource "aws_iot_topic_rule" "aq_timestream_rule" {
 resource "aws_iam_policy" "timestream_publish_policy" {
   name = "timestream_publish_policy"
   description = "Policy to allow publishing to Timestream"
+
+  tags = {
+    app = "aq_data",
+    flow = "timestream"
+  }
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -88,6 +105,11 @@ resource "aws_iam_role_policy_attachment" "timestream_publish_attachment" {
 
 resource "aws_iam_role" "iot_role" {
   name = "iot_role"
+
+  tags = {
+    app = "aq_data",
+    flow = "timestream"
+  }
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
