@@ -1,4 +1,3 @@
-#TODO: uncomment to enable timestream
 resource "aws_timestreamwrite_database" "aq_time_stream" {
   database_name = "aq-time-stream"
 
@@ -7,7 +6,6 @@ resource "aws_timestreamwrite_database" "aq_time_stream" {
   }
 }
 
-#TODO: uncomment to enable timestream
 resource "aws_timestreamwrite_table" "aq_time_stream_table" {
   #  https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/timestreamwrite_table
   database_name = aws_timestreamwrite_database.aq_time_stream.database_name
@@ -26,14 +24,12 @@ resource "aws_timestreamwrite_table" "aq_time_stream_table" {
   }
 
   retention_properties {
-#    TODO: adjust retention period values!!!
     magnetic_store_retention_period_in_days = 1
     memory_store_retention_period_in_hours  = 1
   }
 
 }
 
-#  TODO: uncomment to enable timestream
 resource "aws_iot_topic_rule" "aq_timestream_rule" {
   #  IoT topic rule to direct data published in MQTT topic to the Kinesis Data Stream
   name        = "AQ_Timestream_MeasurementRule"
@@ -85,13 +81,11 @@ resource "aws_iam_policy" "timestream_publish_policy" {
   })
 }
 
-#TODO: uncomment to enable timestream
 resource "aws_iam_role_policy_attachment" "timestream_publish_attachment" {
   policy_arn = aws_iam_policy.timestream_publish_policy.arn
   role       = aws_iam_role.iot_role.name
 }
 
-#TODO: uncomment to enable timestream
 resource "aws_iam_role" "iot_role" {
   name = "iot_role"
 

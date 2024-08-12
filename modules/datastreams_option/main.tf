@@ -1,4 +1,3 @@
-# TODO: uncomment to enable streaming option
 resource "aws_iot_topic_rule" "aq_kinesis_rule" {
   name        = "AQ_Kinesis_Measurement_Rule"
   description = "IoT Topic Kinesis Rule for AQ measurements"
@@ -24,21 +23,9 @@ resource "aws_kinesis_stream" "aq_data_stream" {
   }
 }
 
-
-#
-# Optionally, you might want to output the IAM role ARN for reference
-#output "iot_kinesis_role_arn" {
-#  value = aws_iam_role.iot_role.arn
-#}
-
-# TODO: uncomment to enable streaming option
-
-
-
 ########################################################################################################################
 ########################################################################################################################
 # Kinesis Firehouse -> S3
-# TODO: uncomment to enable streaming option
 resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
   name        = "terraform-kinesis-firehose-extended-s3-test-stream"
   destination = "extended_s3"
@@ -58,7 +45,7 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
     # Example prefix using partitionKeyFromQuery, applicable to JQ processor
     # For dynamic partitioning: https://analyticsweek.com/kinesis-data-firehose-now-supports-dynamic-partitioning-to-amazon-s3/
     prefix = "data/device_id=!{partitionKeyFromQuery:device_id}/year:!{partitionKeyFromQuery:year}/month:!{partitionKeyFromQuery:month}/day:!{partitionKeyFromQuery:day}/hour:!{partitionKeyFromQuery:hour}/"
-    #    prefix = "data/device_id=!{partitionKeyFromQuery:device_id}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
+#        prefix = "data/device_id=!{partitionKeyFromQuery:device_id}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
     error_output_prefix = "errors/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/!{firehose:error-output-type}/"
 
     processing_configuration {
@@ -87,8 +74,8 @@ resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
         }
         parameters {
           parameter_name  = "MetadataExtractionQuery"
-          parameter_value = "{device_id:.device_id, year:.time | strptime(\"%Y-%m-%dT%H:%M:%SZ\") | strftime(\"%Y\"), month: .time | strptime(\"%Y-%m-%dT%H:%M:%SZ\") | strftime(\"%m\"), day: .time | strptime(\"%Y-%m-%dT%H:%M:%SZ\") | strftime(\"%d\"), hour:.time | strptime(\"%Y-%m-%dT%H:%M:%SZ\") | strftime(\"%H\")}"
-          #          parameter_value = "{device_id:.device_id}"
+          parameter_value = "{device_id:.device_id, year:.time | strptime(\"%Y-%m-%d %H:%M:%S\") | strftime(\"%Y\"), month:.time | strptime(\"%Y-%m-%d %H:%M:%S\") | strftime(\"%m\"), day:.time | strptime(\"%Y-%m-%d %H:%M:%S\") | strftime(\"%d\"), hour:.time | strptime(\"%Y-%m-%d %H:%M:%S\") | strftime(\"%H\")}"
+#                    parameter_value = "{device_id:.device_id}"
         }
       }
     }
@@ -114,32 +101,9 @@ resource "aws_s3_bucket_acl" "bucket_acl" {
   depends_on = [aws_s3_bucket_ownership_controls.s3_bucket_acl_ownership]
 }
 
-# TODO: do not remember about code below, keep commented
-resource "aws_iam_policy" "data_stream_policy" {
-  name        = "data_stream_policy"
-  description = "Data Stream Policy"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Action   = [
-          "kinesis:DescribeStream"
-        ],
-        Effect   = "Allow",
-        Resource = [
-          aws_kinesis_stream.aq_data_stream.arn
-        ]
-      }
-      # Add more statements as needed for other permissions
-    ]
-  })
-}
-
 
 # https://stackoverflow.com/questions/76049290/error-accesscontrollistnotsupported-when-trying-to-create-a-bucket-acl-in-aws
 # Resource to avoid error "AccessControlListNotSupported: The bucket does not allow ACLs"
-# TODO: uncomment to enable streaming option
 resource "aws_s3_bucket_ownership_controls" "s3_bucket_acl_ownership" {
   bucket = aws_s3_bucket.measurements_bucket.id
   rule {
