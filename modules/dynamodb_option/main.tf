@@ -6,6 +6,11 @@ resource "aws_dynamodb_table" "aq_data_dynamodb_table" {
   hash_key       = "device_id"
   range_key      = "time"
 
+  tags = {
+    app = "aq_data",
+    flow = "dynamodb"
+  }
+
   attribute {
     name = "device_id"
     type = "S"
@@ -26,6 +31,11 @@ resource "aws_iot_topic_rule" "aq_dynamodb_rule" {
   sql         = "SELECT * FROM '${var.iot_topic}'"
   sql_version = "2016-03-23"
 
+  tags = {
+    app = "aq_data",
+    flow = "dynamodb"
+  }
+
   dynamodb {
     role_arn        = aws_iam_role.aq_data_dynamodb_role.arn
     table_name      = aws_dynamodb_table.aq_data_dynamodb_table.name
@@ -41,6 +51,11 @@ resource "aws_iot_topic_rule" "aq_dynamodb_rule" {
 
 resource "aws_iam_role" "aq_data_dynamodb_role" {
   name = "aq_data_dynamodb_role"
+
+  tags = {
+    app = "aq_data",
+    flow = "dynamodb"
+  }
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -59,6 +74,11 @@ resource "aws_iam_role" "aq_data_dynamodb_role" {
 resource "aws_iam_policy" "aq_data_dynamodb_policy" {
   name        = "iot-dynamodb-policy"
   description = "Policy to allow IoT Core to write data to DynamoDB table"
+
+  tags = {
+    app = "aq_data",
+    flow = "dynamodb"
+  }
 
   policy = jsonencode({
     Version = "2012-10-17",
