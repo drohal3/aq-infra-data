@@ -1,6 +1,12 @@
 resource "aws_iot_topic_rule" "aq_kinesis_rule" {
   name        = "AQ_Kinesis_Measurement_Rule"
   description = "IoT Topic Kinesis Rule for AQ measurements"
+
+  tags = {
+    app = "aq_data",
+    flow = "datastreams"
+  }
+
   enabled     = true
   sql         = "SELECT * FROM '${var.iot_topic}'"
   sql_version = "2016-03-23"
@@ -16,6 +22,12 @@ resource "aws_kinesis_stream" "aq_data_stream" {
   #  https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kinesis_stream
   #  Kinesis Data Stream for raw aq measurement data
   name             = "aq-data-stream"
+
+  tags = {
+    app = "aq_data",
+    flow = "datastreams"
+  }
+
   retention_period = 24
 
   stream_mode_details {
@@ -28,6 +40,12 @@ resource "aws_kinesis_stream" "aq_data_stream" {
 # Kinesis Firehouse -> S3
 resource "aws_kinesis_firehose_delivery_stream" "extended_s3_stream" {
   name        = "terraform-kinesis-firehose-extended-s3-test-stream"
+
+  tags = {
+    app = "aq_data",
+    flow = "datastreams"
+  }
+
   destination = "extended_s3"
 
   extended_s3_configuration {
@@ -91,7 +109,8 @@ resource "aws_s3_bucket" "measurements_bucket" {
   bucket = "idealaq-aq-measurements-bucket"
 
   tags = {
-    Name = "AQ measurements bucket"
+    app = "aq_data",
+    flow = "datastreams"
   }
 }
 
@@ -114,6 +133,11 @@ resource "aws_s3_bucket_ownership_controls" "s3_bucket_acl_ownership" {
 # Kinesis -> S3 IAM:
 resource "aws_iam_role" "iot_kinesis_s3_role" {
   name = "firehouse_role"
+
+  tags = {
+    app = "aq_data",
+    flow = "datastreams"
+  }
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -142,6 +166,11 @@ resource "aws_iam_policy" "kinesis_publish_policy" {
   name        = "kinesis_publish_policy"
   description = "Policy to allow publishing to Kinesis Data Stream"
 
+  tags = {
+    app = "aq_data",
+    flow = "datastreams"
+  }
+
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -166,6 +195,11 @@ resource "aws_iam_policy" "firehose_publish_policy" {
   name        = "firehose_publish_policy"
   description = "Policy to allow publishing to Kinesis Delivery Stream"
 
+  tags = {
+    app = "aq_data",
+    flow = "datastreams"
+  }
+
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -189,6 +223,11 @@ resource "aws_iam_role_policy_attachment" "firehose_publish_policy_attachment" {
 resource "aws_iam_policy" "s3_publish_policy" {
   name        = "s3_publish_policy"
   description = "Policy to allow publishing to s3"
+
+  tags = {
+    app = "aq_data",
+    flow = "datastreams"
+  }
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -223,6 +262,11 @@ resource "aws_iam_role_policy_attachment" "s3_publish_policy_attachment" {
 resource "aws_iam_policy" "data_stream_consume_policy" {
   name        = "data_stream_policy"
   description = "Data Stream Policy"
+
+  tags = {
+    app = "aq_data",
+    flow = "datastreams"
+  }
 
   policy = jsonencode({
     Version = "2012-10-17",
