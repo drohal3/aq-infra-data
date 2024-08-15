@@ -5,8 +5,8 @@
 # Retrieve and save the certificate
 echo "Retrieving certificate..."
 certificate_pem=$(terraform output -raw certificate_pem)
-echo "$certificate_pem" > deviceCert.crt
-echo "Certificate saved to deviceCert.crt"
+echo "$certificate_pem" > deviceCert.crt.pem
+echo "Certificate saved to deviceCert.crt.pem"
 
 # Retrieve and save the private key
 echo "Retrieving private key..."
