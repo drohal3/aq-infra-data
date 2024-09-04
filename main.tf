@@ -158,14 +158,43 @@ module "dynamodb_option" {
   source         = "./modules/dynamodb_option"
   iot_topic      = var.iot_topic
   write_capacity = var.expected_devices
+  table_name = "aq_measurements"
+  tags = {
+    app = "aq_data_temp",
+    flow = "dynamodb_temp"
+  }
+  name = "temp"
 }
 
-#module "timestream_option" {
-#  source    = "./modules/timestream_option"
-#  iot_topic = var.iot_topic
-#}
-#
-#module "datastreams_option" {
-#  source    = "./modules/datastreams_option"
-#  iot_topic = var.iot_topic
-#}
+#######################################################################################################################
+
+module "dynamodb_option_experiment" {
+  source         = "./modules/dynamodb_option"
+  iot_topic      = var.iot_topic
+  write_capacity = var.expected_devices
+  table_name = "aq_measurements_experiment"
+  tags = {
+    app = "aq_data",
+    flow = "dynamodb"
+  }
+  name = "experiment"
+}
+
+module "timestream_option" {
+  source    = "./modules/timestream_option"
+  iot_topic = var.iot_topic
+  table_name = "aq_data"
+  tags = {
+    app = "aq_data",
+    flow = "timestream"
+  }
+}
+
+module "datastreams_option" {
+  source    = "./modules/datastreams_option"
+  iot_topic = var.iot_topic
+  tags = {
+    app = "aq_data",
+    flow = "datastreams"
+  }
+}

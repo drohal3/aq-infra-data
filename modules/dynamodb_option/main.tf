@@ -1,15 +1,12 @@
 resource "aws_dynamodb_table" "aq_data_dynamodb_table" {
-  name           = "aq_measurements"
+  name           = var.table_name
   billing_mode   = "PROVISIONED"
   read_capacity  = var.read_capacity
   write_capacity = var.write_capacity
   hash_key       = "device_id"
   range_key      = "time"
 
-  tags = {
-    app = "aq_data",
-    flow = "dynamodb"
-  }
+  tags = var.tags
 
   attribute {
     name = "device_id"
@@ -25,16 +22,13 @@ resource "aws_dynamodb_table" "aq_data_dynamodb_table" {
 
 
 resource "aws_iot_topic_rule" "aq_dynamodb_rule" {
-  name        = "AQ_DynamoDB_Measurement_Rule"
+  name        = "AQ_DynamoDB_Measurement_Rule_${var.name}"
   description = "IoT Topic DynamoDB Rule for AQ measurements"
   enabled     = true
   sql         = "SELECT * FROM '${var.iot_topic}'"
   sql_version = "2016-03-23"
 
-  tags = {
-    app = "aq_data",
-    flow = "dynamodb"
-  }
+  tags = var.tags
 
   dynamodb {
     role_arn        = aws_iam_role.aq_data_dynamodb_role.arn
@@ -50,12 +44,9 @@ resource "aws_iot_topic_rule" "aq_dynamodb_rule" {
 }
 
 resource "aws_iam_role" "aq_data_dynamodb_role" {
-  name = "aq_data_dynamodb_role"
+  name = "aq_data_dynamodb_role_${var.name}"
 
-  tags = {
-    app = "aq_data",
-    flow = "dynamodb"
-  }
+  tags = var.tags
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -72,13 +63,10 @@ resource "aws_iam_role" "aq_data_dynamodb_role" {
 }
 
 resource "aws_iam_policy" "aq_data_dynamodb_policy" {
-  name        = "iot-dynamodb-policy"
+  name        = "iot-dynamodb-policy-${var.name}"
   description = "Policy to allow IoT Core to write data to DynamoDB table"
 
-  tags = {
-    app = "aq_data",
-    flow = "dynamodb"
-  }
+  tags = var.tags
 
   policy = jsonencode({
     Version = "2012-10-17",
