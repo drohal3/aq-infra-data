@@ -14,6 +14,12 @@ variable "iot_topic" {
   type        = string
 }
 
+variable "iot_topic_experiment" {
+  description = "The MQTT topic for IoT Core"
+  default     = "aq/experiment"
+  type        = string
+}
+
 provider "aws" {
   region = var.region
 }
@@ -170,7 +176,7 @@ module "dynamodb_option" {
 
 module "dynamodb_option_experiment" {
   source         = "./modules/dynamodb_option"
-  iot_topic      = var.iot_topic
+  iot_topic      = var.iot_topic_experiment
   write_capacity = var.expected_devices
   table_name = "aq_measurements_experiment"
   tags = {
@@ -182,7 +188,7 @@ module "dynamodb_option_experiment" {
 
 module "timestream_option" {
   source    = "./modules/timestream_option"
-  iot_topic = var.iot_topic
+  iot_topic = var.iot_topic_experiment
   table_name = "aq_data"
   tags = {
     app = "aq_data",
@@ -192,7 +198,7 @@ module "timestream_option" {
 
 module "datastreams_option" {
   source    = "./modules/datastreams_option"
-  iot_topic = var.iot_topic
+  iot_topic = var.iot_topic_experiment
   tags = {
     app = "aq_data",
     flow = "datastreams"
